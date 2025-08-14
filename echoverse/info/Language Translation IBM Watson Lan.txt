@@ -1,0 +1,32 @@
+1. Language Translation
+
+IBM Watson Language Translator API — translate text before narration.
+
+2. Personalized Voiceover
+
+AI voice generation: IBM Watson Text-to-Speech
+
+Custom voice option: IBM Watson TTS Custom Voice Model
+
+3. Summary Listening Mode
+
+Summarization: IBM Watsonx Granite LLM
+
+4. Voice Commands
+
+Speech recognition: Web Speech API (real-time, browser-based)
+
+Command parsing: Python backend uses regex/NLP to detect actions (e.g., "skip to chapter (\d+)", "summarize last section")
+
+Narration execution: IBM Watson TTS generates audio for the requested section only
+
+UI update: Streamlit refreshes audio player dynamically without page reload
+
+5. Cinematic Background Audio
+
+Timestamps: IBM Watson TTS (timestamps enabled)
+
+Keyword-based trigger: Python detects scene words (“rain”, “thunder”) in timestamps output
+
+Audio overlay: PyDub adds sound effects at exact positions in narration
+
