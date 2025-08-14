@@ -5,6 +5,19 @@ from pathlib import Path
 from pypdf import PdfReader
 from model import genrate_reader_json
 from utils import concated_text
+from tts import generate_tts
+
+# from ibm_watson import TextToSpeechV1
+# from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
+
+
+# --- IBM TTS setup ---
+# API_KEY = "Qkhw_mmE9bPpKDPQui52K8Loz4M76KNz9JZNh9ry013p"
+# URL = "https://api.eu-de.text-to-speech.watson.cloud.ibm.com"
+
+# authenticator = IAMAuthenticator(API_KEY)
+# tts_service = TextToSpeechV1(authenticator=authenticator)
+# tts_service.set_service_url(URL)
 
 # ---------------------------
 # Configure page
@@ -115,7 +128,32 @@ def load_css():
 
 load_css()
 
+# def generate_tts(emotion_objects, output_file="output_audio.mp3", voice="en-US_AllisonV3Voice"):
+#     """
+#     Convert text (emotion_objects) to speech and save as an audio file.
+    
+#     Args:
+#         emotion_objects: List of dicts containing 'speech_text' key.
+#         output_file: Path to save the audio file.
+#         voice: IBM Watson TTS voice.
+    
+#     Returns:
+#         Path to the saved audio file.
+#     """
+#     # Concatenate text for TTS
+#     tts_text = concated_text(emotion_objects)
 
+#     # Generate audio
+#     with open(output_file, "wb") as audio_file:
+#         response = tts_service.synthesize(
+#             tts_text,
+#             voice=voice,
+#             accept="audio/mp3"
+#         ).get_result()
+#         audio_file.write(response.content)
+
+#     print(f"Audio saved as {output_file}")
+#     return output_file
 # ---------------------------
 # Header Renderer
 # ---------------------------
@@ -235,36 +273,61 @@ def render_home_page():
 # ---------------------------
 def render_output_page():
     render_header(show_back_button=True)
+
+    # Layout: three columns
     col1, col2, col3 = st.columns([1, 1.5, 1])
 
+    # -------------------- Column 1: Original Input --------------------
     with col1:
         original_text = st.session_state.get("original_text", "No text provided")
         st.markdown(
-            f"<div class='content-card'><div class='card-title'>📄 Original Input</div><div style='color: #1b262c; line-height: 1.6; font-size: 14px;'>{original_text}</div></div>",
+            f"""
+            <div class='content-card'>
+                <div class='card-title'>📄 Original Input</div>
+                <div style='color: #1b262c; line-height: 1.6; font-size: 14px;'>{original_text}</div>
+            </div>
+            """,
             unsafe_allow_html=True,
         )
-
+    ai_generated_object = None
+    # -------------------- Column 2: Tone-Adapted Narration --------------------
     with col2:
         tone = st.session_state.get("selected_tone", "Neutral")
-        ai_generated_object = genrate_reader_json(
-            st.session_state.get("original_text", "No text provided"), tone
-        )
-        print(ai_generated_object)
+        ai_generated_object = genrate_reader_json(original_text, tone)
+        print(ai_generated_object)  # For debugging
         adapted_text = concated_text(ai_generated_object)
         st.markdown(
-            f"<div class='content-card'><div class='card-title'>🎵 Tone-Adapted Narration</div><div style='color: #1b262c; line-height: 1.6; font-size: 14px; overflow-y: scroll;'>{adapted_text}</div></div>",
+            f"""
+            <div class='content-card'>
+                <div class='card-title'>🎵 Tone-Adapted Narration</div>
+                <div style='color: #1b262c; line-height: 1.6; font-size: 14px; overflow-y: scroll;'>{adapted_text}</div>
+            </div>
+            """,
             unsafe_allow_html=True,
         )
 
+    # -------------------- Column 3: Audio Player --------------------
     with col3:
         st.markdown(
-            '<div class="content-card"><div class="card-title">🎧 Audio Player</div>',
+            '<div class="content-card"><div class="card-title">🎧 Audio Player</div></div>',
             unsafe_allow_html=True,
         )
         st.info(
             "Audio generation feature is enabled in backend. Your tone-adapted audio will play here once ready."
         )
 
+        # Generate and play TTS audio
+        audio_file_path = Path("temp_audio.mp3")
+        
+        # Replace this with your actual TTS generation function
+        # Example: generate_tts(adapted_text, audio_file_path)
+        generate_tts(ai_generated_object, audio_file_path)
+
+        if audio_file_path.exists():
+            audio_bytes = open(audio_file_path, "rb").read()
+            st.audio(audio_bytes, format="audio/mp3")
+        else:
+            st.info("Audio will appear here once generated.")
 
 # ---------------------------
 # Page Router
